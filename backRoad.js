@@ -1,52 +1,27 @@
 import CookieUtil from "./utils/CookieUtil";
 
 export default class {
+  constructor(title = "Заголовок по умолчанию", desc = "Описание по умолчанию") {
+    this.devMode = true;
+    this.cookieUtil = new CookieUtil();
+    this.title = title;
+    this.desc = desc;
+    document.addEventListener('mouseleave', cn => this.isOutDocument(cn) );
+    this.modalScripts();
+  }
 
-  _cookieOptions() {
+  get _cookieOptions() {
     return {
       name: "backroad",
       value: 'true',
-      domain: 'test.workplace',
+      domain: this.devMode ? 'test.workplace' : 'your-domain.com',
       path: '/',
       expirationTime: 259200, // 3 days
       secure: false
     }
   }
 
-  constructor(title, desc) {
-    this.devMode = true;
-    this.cookieUtil = new CookieUtil();
-    document.addEventListener('mouseleave', cn => this.isOutDocument(cn) );
-    this.modalScripts();
-    this.title = title;
-    this.desc = desc;
-  }
-
-  get cookieName() {
-    return this._cookieOptions().name
-  }
-
-  get cookieValue() {
-    return this._cookieOptions().value
-  }
-
-  get cookieDomain() {
-    return this._cookieOptions().domain
-  }
-  
-  get cookiePath() {
-    return this._cookieOptions().path
-  }
-
-  get cookieExpires() {
-    return this._cookieOptions().expirationTime
-  }
-
-  get cookieSecure() {
-    return this._cookieOptions().secure
-  }
-
-  isOutDocument(evt) {
+  isOutDocument() {
     this.sendWarning();
   }
 
@@ -102,8 +77,7 @@ export default class {
   }
 
   modalScripts() {
-    return window.closeBackRoadLead = function(el) {
-      console.log(el);
+    window.closeBackRoadLead = function(el) {
       el.parentNode.parentNode.style.display = "none";
     }
   }
@@ -121,46 +95,37 @@ export default class {
   }
 
   sendWarning() {
-    if (this.readBackRoadCookie() === undefined) {
-      this.devMode ? console.error('Функция ничего не вернула. Состояние куки: ' + this.readBackRoadCookie()) : false;
+    if (this.readLeadCookie === undefined) {
+      this.devMode ? console.error('Функция ничего не вернула. Состояние куки: ' + this.readLeadCookie) : false;
     }
-    if (!!this.readBackRoadCookie()) {
-      this.devMode ? console.log('Окно уже было показано') : false;
-      return null;
+    if (!!this.readLeadCookie) {
+      this.devMode ? console.log('Окно уже было показано') : null;
+      return false;
     } else {
-      this.mountBackRoadCookie();
-      this.devMode ? console.log('Куки установлены') : false;
-      this.openModal();
+      this.mountLeadCookie();
+      this.devMode ? console.log('Куки установлены') : null;
+      this.mountModal();
     }
   }
 
-  openModal() {
+  mountModal() {
     document.head.insertAdjacentHTML("beforeend", this.modalStyles());
     document.body.insertAdjacentHTML("beforeend", this.modalHTML());
   }
 
-  mountBackRoadCookie() {
+  mountLeadCookie() {
     this.cookieUtil.setCookie(
-      this.cookieName,
-      this.cookieValue,
-      this.cookieExpires,
-      this.cookiePath,
-      this.cookieDomain,
-      this.cookieSecure
+      this._cookieOptions.name,
+      this._cookieOptions.value,
+      this._cookieOptions.expirationTime,
+      this._cookieOptions.path,
+      this._cookieOptions.domain,
+      this._cookieOptions.secure
     )
   }
 
-  readBackRoadCookie() {
-    return this.cookieUtil.getCookie(this.cookieName)
-  }
-
-  unsetBackRoadCookie() {
-    this.cookieUtil.unsetCookie(
-      this.cookieName,
-      this.cookiePath,
-      this.cookieDomain,
-      this.cookieSecure
-    )
+  get readLeadCookie() {
+    return this.cookieUtil.getCookie(this._cookieOptions.name)
   }
 
 }
